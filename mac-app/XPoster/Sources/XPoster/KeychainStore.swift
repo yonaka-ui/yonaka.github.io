@@ -5,17 +5,6 @@ import Security
 enum KeychainStore {
     private static let service = "com.yonaka.xposter"
 
-    struct XCredentials {
-        var apiKey: String
-        var apiSecret: String
-        var accessToken: String
-        var accessTokenSecret: String
-
-        var isComplete: Bool {
-            !apiKey.isEmpty && !apiSecret.isEmpty && !accessToken.isEmpty && !accessTokenSecret.isEmpty
-        }
-    }
-
     struct BlueskyCredentials {
         /// Handle or email, e.g. "yonaka.bsky.social"
         var identifier: String
@@ -55,22 +44,6 @@ enum KeychainStore {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         guard status == errSecSuccess, let data = result as? Data else { return "" }
         return String(data: data, encoding: .utf8) ?? ""
-    }
-
-    static func loadX() -> XCredentials {
-        XCredentials(
-            apiKey: get(forAccount: "x_apiKey"),
-            apiSecret: get(forAccount: "x_apiSecret"),
-            accessToken: get(forAccount: "x_accessToken"),
-            accessTokenSecret: get(forAccount: "x_accessTokenSecret")
-        )
-    }
-
-    static func saveX(_ credentials: XCredentials) {
-        set(credentials.apiKey, forAccount: "x_apiKey")
-        set(credentials.apiSecret, forAccount: "x_apiSecret")
-        set(credentials.accessToken, forAccount: "x_accessToken")
-        set(credentials.accessTokenSecret, forAccount: "x_accessTokenSecret")
     }
 
     static func loadBluesky() -> BlueskyCredentials {

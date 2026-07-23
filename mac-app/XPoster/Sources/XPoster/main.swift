@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "bird", accessibilityDescription: "XPoster")
+            button.image = NSImage(systemSymbolName: "music.note", accessibilityDescription: "投稿する")
             button.action = #selector(togglePopover)
             button.target = self
         }

@@ -10,10 +10,7 @@ struct ComposeView: View {
     @State private var statusIsError = false
     @State private var showingSettings = false
 
-    @State private var postToX = true
-    @State private var postToBluesky = true
-
-    private let characterLimit = 280 // stricter of X (280) and Bluesky (300)
+    private let characterLimit = 300 // Bluesky's post limit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -27,7 +24,7 @@ struct ComposeView: View {
                     Image(systemName: "gearshape")
                 }
                 .buttonStyle(.plain)
-                .help("APIキーの設定")
+                .help("Blueskyアカウントの設定")
             }
 
             TextEditor(text: $text)
@@ -61,13 +58,6 @@ struct ComposeView: View {
                 .help("画像を添付")
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("投稿先").font(.caption).foregroundStyle(.secondary)
-                Toggle("X", isOn: $postToX)
-                Toggle("Bluesky", isOn: $postToBluesky)
-            }
-            .toggleStyle(.checkbox)
-
             if let statusMessage {
                 Text(statusMessage)
                     .font(.caption)
@@ -89,11 +79,11 @@ struct ComposeView: View {
                     if isPosting {
                         ProgressView().controlSize(.small)
                     } else {
-                        Text("投稿する")
+                        Text("Blueskyに投稿する")
                     }
                 }
                 .keyboardShortcut(.return, modifiers: [.command])
-                .disabled(text.isEmpty || text.count > characterLimit || isPosting || (!postToX && !postToBluesky))
+                .disabled(text.isEmpty || text.count > characterLimit || isPosting)
             }
         }
         .padding(14)
@@ -126,55 +116,25 @@ struct ComposeView: View {
         statusMessage = nil
         defer { isPosting = false }
 
-        var successes: [String] = []
-        var failures: [String] = []
-
-        if postToX {
-            let credentials = KeychainStore.loadX()
-            if !credentials.isComplete {
-                failures.append("X: 設定画面(⚙️)でAPIキーを入力してください")
-            } else {
-                do {
-                    var mediaId: String?
-                    if let imageURL {
-                        mediaId = try await TwitterClient.uploadImage(fileURL: imageURL, credentials: credentials)
-                    }
-                    try await TwitterClient.postTweet(text: text, mediaId: mediaId, credentials: credentials)
-                    successes.append("X")
-                } catch {
-                    failures.append("X: \(error.localizedDescription)")
-                }
-            }
+        let credentials = KeychainStore.loadBluesky()
+        guard credentials.isComplete else {
+            statusIsError = true
+            statusMessage = "設定画面(⚙️)でBlueskyのアカウント情報を入力してください。"
+            showingSettings = true
+            return
         }
 
-        if postToBluesky {
-            let credentials = KeychainStore.loadBluesky()
-            if !credentials.isComplete {
-                failures.append("Bluesky: 設定画面(⚙️)でアカウント情報を入力してください")
-            } else {
-                do {
-                    try await BlueskyClient.post(text: text, imageURL: imageURL, credentials: credentials)
-                    successes.append("Bluesky")
-                } catch {
-                    failures.append("Bluesky: \(error.localizedDescription)")
-                }
-            }
-        }
+        do {
+            try await BlueskyClient.post(text: text, imageURL: imageURL, credentials: credentials)
 
-        copyToClipboard()
-
-        if failures.isEmpty {
+            copyToClipboard()
             statusIsError = false
-            statusMessage = "\(successes.joined(separator: "・"))に投稿しました。他のSNS用にテキストはコピー済みです。"
+            statusMessage = "Blueskyに投稿しました。他のSNS用にテキストはコピー済みです。"
             text = ""
             imageURL = nil
-        } else {
+        } catch {
             statusIsError = true
-            var message = failures.joined(separator: "\n")
-            if !successes.isEmpty {
-                message = "\(successes.joined(separator: "・"))には投稿成功。\n" + message
-            }
-            statusMessage = message
+            statusMessage = error.localizedDescription
         }
     }
 }
