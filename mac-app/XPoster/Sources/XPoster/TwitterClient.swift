@@ -24,7 +24,7 @@ private enum OAuth1 {
     static func authorizationHeader(
         method: String,
         url: URL,
-        credentials: KeychainStore.Credentials,
+        credentials: KeychainStore.XCredentials,
         extraParams: [String: String] = [:]
     ) -> String {
         var oauthParams: [String: String] = [
@@ -77,7 +77,7 @@ private enum OAuth1 {
 enum TwitterClient {
     /// Uploads a small image (<5MB, jpg/png/gif) via the classic "simple upload" flow
     /// and returns the resulting media_id_string to attach to a tweet.
-    static func uploadImage(fileURL: URL, credentials: KeychainStore.Credentials) async throws -> String {
+    static func uploadImage(fileURL: URL, credentials: KeychainStore.XCredentials) async throws -> String {
         guard credentials.isComplete else { throw TwitterClientError.missingCredentials }
         guard let imageData = try? Data(contentsOf: fileURL) else { throw TwitterClientError.unreadableImage }
 
@@ -111,7 +111,7 @@ enum TwitterClient {
     }
 
     /// Posts a tweet via API v2, optionally attaching a previously uploaded media id.
-    static func postTweet(text: String, mediaId: String?, credentials: KeychainStore.Credentials) async throws {
+    static func postTweet(text: String, mediaId: String?, credentials: KeychainStore.XCredentials) async throws {
         guard credentials.isComplete else { throw TwitterClientError.missingCredentials }
 
         let tweetURL = URL(string: "https://api.twitter.com/2/tweets")!

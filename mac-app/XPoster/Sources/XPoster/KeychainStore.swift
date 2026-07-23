@@ -1,11 +1,11 @@
 import Foundation
 import Security
 
-/// Stores the X (Twitter) API credentials in the macOS Keychain instead of on disk in plain text.
+/// Stores API credentials in the macOS Keychain instead of on disk in plain text.
 enum KeychainStore {
     private static let service = "com.yonaka.xposter"
 
-    struct Credentials {
+    struct XCredentials {
         var apiKey: String
         var apiSecret: String
         var accessToken: String
@@ -13,6 +13,17 @@ enum KeychainStore {
 
         var isComplete: Bool {
             !apiKey.isEmpty && !apiSecret.isEmpty && !accessToken.isEmpty && !accessTokenSecret.isEmpty
+        }
+    }
+
+    struct BlueskyCredentials {
+        /// Handle or email, e.g. "yonaka.bsky.social"
+        var identifier: String
+        /// An "App Password" generated in Bluesky Settings > App Passwords (not the main account password)
+        var appPassword: String
+
+        var isComplete: Bool {
+            !identifier.isEmpty && !appPassword.isEmpty
         }
     }
 
@@ -46,19 +57,31 @@ enum KeychainStore {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
-    static func load() -> Credentials {
-        Credentials(
-            apiKey: get(forAccount: "apiKey"),
-            apiSecret: get(forAccount: "apiSecret"),
-            accessToken: get(forAccount: "accessToken"),
-            accessTokenSecret: get(forAccount: "accessTokenSecret")
+    static func loadX() -> XCredentials {
+        XCredentials(
+            apiKey: get(forAccount: "x_apiKey"),
+            apiSecret: get(forAccount: "x_apiSecret"),
+            accessToken: get(forAccount: "x_accessToken"),
+            accessTokenSecret: get(forAccount: "x_accessTokenSecret")
         )
     }
 
-    static func save(_ credentials: Credentials) {
-        set(credentials.apiKey, forAccount: "apiKey")
-        set(credentials.apiSecret, forAccount: "apiSecret")
-        set(credentials.accessToken, forAccount: "accessToken")
-        set(credentials.accessTokenSecret, forAccount: "accessTokenSecret")
+    static func saveX(_ credentials: XCredentials) {
+        set(credentials.apiKey, forAccount: "x_apiKey")
+        set(credentials.apiSecret, forAccount: "x_apiSecret")
+        set(credentials.accessToken, forAccount: "x_accessToken")
+        set(credentials.accessTokenSecret, forAccount: "x_accessTokenSecret")
+    }
+
+    static func loadBluesky() -> BlueskyCredentials {
+        BlueskyCredentials(
+            identifier: get(forAccount: "bsky_identifier"),
+            appPassword: get(forAccount: "bsky_appPassword")
+        )
+    }
+
+    static func saveBluesky(_ credentials: BlueskyCredentials) {
+        set(credentials.identifier, forAccount: "bsky_identifier")
+        set(credentials.appPassword, forAccount: "bsky_appPassword")
     }
 }
